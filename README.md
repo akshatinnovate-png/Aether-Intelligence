@@ -2,7 +2,7 @@
 
 Aether is one workspace for the whole lab: projects, tasks, code, research, competitions, equipment, the calendar and the team's conversation. Everything is connected, so a change in one place updates everywhere it matters, live, for everyone.
 
-Aether is the actual workspace the team works in, not a website about the lab. It runs free on Cloudflare and installs as a desktop app.
+Aether is the actual workspace the team works in, not a website about the lab. It runs free on Cloudflare and installs as an app from the browser on any device.
 
 ![Dashboard](docs/screens/dashboard.png)
 
@@ -32,7 +32,7 @@ Aether is the actual workspace the team works in, not a website about the lab. I
 | **Notifications** | Generated only by real changes: assignments, mentions, comments, status changes, unblocked tasks, deadlines (hourly job), competition stages, bookings, PRs and CI failures, and role changes. Delivered in-app, on the desktop and optionally by email, with per-person preferences. |
 | **Team & roles** | Email invites with a link that adds the person. Roles: **Owner → Admin (vice administrator) → Lead → Member → Guest**, enforced on the server, plus an audit log and ownership transfer. |
 | **Settings** | Theme (dark, light, system), density, motion, sidebar, default project view, dashboard layout, notification preferences, GitHub, email (Gmail App Password), workspace, data export and the audit log. |
-| **Desktop app** | Electron app for Windows, macOS and Linux with a tray icon, unread badge, native notifications, launch at login and single instance. |
+| **Installable app (PWA)** | Installs from the browser on Windows, macOS, Linux, Android and iOS: its own window and icon, unread badge, system notifications, opens offline, always up to date. An optional Electron shell lives in `desktop/`. |
 
 ## How it is connected
 

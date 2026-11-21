@@ -6,6 +6,7 @@ import {
   Boxes,
   Calendar,
   CheckSquare,
+  Download,
   ChevronsLeft,
   Code2,
   FlaskConical,
@@ -20,6 +21,7 @@ import {
   Users,
 } from 'lucide-react';
 import { useUI } from '../lib/store';
+import { installApp, setAppBadge, usePwa } from '../lib/pwa';
 import { connectRealtime, useChannels, useMe, useNotifications, useProjects, useTasks, useUsers } from '../lib/data';
 import { api } from '../lib/api';
 import { qc } from '../lib/data';
@@ -119,6 +121,7 @@ function DesktopBridge() {
   const unread = notifications.filter((n) => !n.readAt).length + channels.reduce((s, c) => s + (c.kind === 'dm' ? c.unread : c.mentions), 0);
   useEffect(() => {
     window.aetherDesktop?.setBadge(unread);
+    setAppBadge(unread);
     document.title = unread ? `(${unread}) Aether` : 'Aether';
   }, [unread]);
   return null;
@@ -269,6 +272,7 @@ function Topbar() {
             ))}
           </div>
         )}
+        <InstallButton />
         <CreateMenu onTask={() => openCreateTask({})} onProject={() => setCreateProject(true)} canProject={me.role !== 'member' && me.role !== 'guest'} disabled={me.role === 'guest'} />
         <button className="btn ghost icon sm" style={{ position: 'relative' }} onClick={() => nav('/inbox')} aria-label="Notifications">
           <Bell />
@@ -294,5 +298,16 @@ function CreateMenu({ onTask, onProject, canProject, disabled }: { onTask: () =>
         </button>
       )}
     </div>
+  );
+}
+
+function InstallButton() {
+  const { prompt, installed } = usePwa();
+  if (installed || !prompt) return null;
+  return (
+    <button className="btn sm desktop-only" title="Install Aether as an app" onClick={() => installApp()}>
+      <Download />
+      Install app
+    </button>
   );
 }

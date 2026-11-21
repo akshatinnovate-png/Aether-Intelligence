@@ -8,6 +8,9 @@ import { api } from './lib/api';
 import { Shell } from './components/Shell';
 import { AcceptInvite, Login, Setup } from './pages/Auth';
 import type { Me } from './types';
+import { initPwa } from './lib/pwa';
+
+initPwa();
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const MyWork = lazy(() => import('./pages/MyWork'));

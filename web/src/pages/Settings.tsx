@@ -9,6 +9,7 @@ import { ago, can, fmtDateTime, RANK, ROLE_DESC, ROLE_LABEL } from '../lib/deriv
 import { toast, toastError } from '../lib/store';
 import { Avatar, confirmDialog, Field, Seg, Toggle } from '../components/ui';
 import { savePrefs } from '../components/Shell';
+import { installApp, usePwa } from '../lib/pwa';
 import { DASH_PANELS } from './Dashboard';
 import { useGhStatus } from './Code';
 import type { Activity, Prefs, Role } from '../types';
@@ -18,7 +19,7 @@ const SECTIONS = [
   { id: 'preferences', label: 'Appearance & layout', icon: Palette },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'integrations', label: 'GitHub', icon: GithubMark },
-  { id: 'desktop', label: 'Desktop app', icon: Laptop },
+  { id: 'desktop', label: 'Install app', icon: Laptop },
   { id: 'team', label: 'Team & roles', icon: Users, admin: true },
   { id: 'email', label: 'Email delivery', icon: Mail, admin: true },
   { id: 'workspace', label: 'Workspace', icon: Building2, admin: true },
@@ -336,21 +337,38 @@ function CopyBox({ text }: { text: string }) {
 }
 
 function Desktop() {
-  const desktop = window.aetherDesktop;
+  const { prompt, installed } = usePwa();
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
   return (
-    <Section title="Aether for desktop" desc="A native app for Windows, macOS and Linux: its own window, tray icon, unread badge, system notifications and launch at login.">
-      {desktop ? (
-        <div className="ok-box">You are using the desktop app (version {desktop.version}).</div>
-      ) : (
-        <>
-          <p className="small t2" style={{ margin: 0 }}>Installers are built automatically by GitHub Actions on each release of the Aether repository. Download the one for your system from the repository’s Releases page, install it, and enter this workspace address on first launch:</p>
-          <CopyBox text={location.origin} />
-          <a className="btn primary" style={{ alignSelf: 'flex-start' }} href="https://github.com/akshatinnovate-png/Aether-Intelligence/releases/latest" target="_blank" rel="noreferrer">
-            <Laptop /> Download from Releases
-          </a>
-        </>
-      )}
-    </Section>
+    <>
+      <Section title="Install Aether as an app" desc="Aether installs straight from the browser on any device — its own window and icon, unread badge, system notifications and quick launch. No download site, no installer, always up to date.">
+        {installed ? (
+          <div className="ok-box">You are using the installed app.</div>
+        ) : prompt ? (
+          <button className="btn primary" style={{ alignSelf: 'flex-start' }} onClick={() => installApp().then((ok) => ok && toast({ title: 'Aether installed' }))}>
+            <Laptop /> Install Aether
+          </button>
+        ) : (
+          <div className="small t2">{ios ? 'On iPhone/iPad: open this page in Safari, tap the Share button, then “Add to Home Screen”.' : 'Use your browser’s install option: the install icon at the right of the address bar (Chrome, Edge), or the menu → “Install app” / “Add to Home screen” on Android.'}</div>
+        )}
+        <div className="xs muted">Then turn on <Link className="accent-text" to="/settings/notifications">desktop alerts</Link> so notifications reach you when the app is in the background.</div>
+      </Section>
+      <Section title="Share with your team" desc="Send them this address. After they accept their email invite, they can install it the same way.">
+        <CopyBox text={location.origin} />
+      </Section>
+      <Section title="How to install, by device">
+        <div className="table-wrap">
+          <table className="t">
+            <tbody>
+              <tr><td className="small">Windows / Mac / Linux (Chrome, Edge, Brave)</td><td className="small t2">Install icon in the address bar → Install</td></tr>
+              <tr><td className="small">Android (Chrome)</td><td className="small t2">⋮ menu → Install app</td></tr>
+              <tr><td className="small">iPhone / iPad (Safari)</td><td className="small t2">Share → Add to Home Screen</td></tr>
+              <tr><td className="small">Mac (Safari 17+)</td><td className="small t2">File → Add to Dock</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </Section>
+    </>
   );
 }
 

@@ -2,6 +2,7 @@ import { QueryClient, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { api } from './api';
 import { toast, useUI } from './store';
+import { systemNotify } from './pwa';
 import type {
   Achievement,
   Activity,
@@ -222,12 +223,8 @@ function handle(m: Live, meId: string) {
       toast({ title: m.row.title, body: m.row.body, link: m.row.link });
       if (window.aetherDesktop) {
         if (document.hidden || !document.hasFocus()) window.aetherDesktop.notify(m.row.title, m.row.body);
-      } else if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-        try {
-          new Notification(m.row.title, { body: m.row.body, tag: m.row.id });
-        } catch {
-          /* unsupported */
-        }
+      } else if (document.hidden || !document.hasFocus()) {
+        systemNotify(m.row.title, m.row.body, m.row.link || '/inbox', m.row.id);
       }
       break;
     case 'message': {

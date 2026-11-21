@@ -94,21 +94,20 @@ Each person acts with their own GitHub permissions. Inside Aether they can:
 
 Linking a repository to a project installs a webhook. Commits that mention `SAA-12` link to that task, and `fixes SAA-12` completes it, either in a commit or in a merged PR's description. CI failures notify the project lead.
 
-## 7. Desktop app
+## 7. Install it as an app (PWA)
 
-Desktop installers are built by GitHub Actions, on GitHub's free runners:
+There's nothing to download. Everyone installs Aether straight from the browser and gets its own window and icon, an unread badge, system notifications, and automatic updates on every deploy.
 
-1. Go to **Actions → Desktop app → Run workflow**, or push a tag like `desktop-v1.0.0`.
-2. When it finishes, the **Releases** page has:
-   - `Aether-Setup-x.y.z.exe` (Windows)
-   - `Aether-x.y.z-arm64.dmg` and the x64 `.dmg` (macOS)
-   - `.AppImage` and `.deb` (Linux)
-3. Install it and enter your workspace URL on first launch.
+| Device | How |
+|---|---|
+| Windows / Mac / Linux (Chrome, Edge, Brave) | Click the install icon in the address bar, or **Install app** in Aether's top bar, then **Install** |
+| Android (Chrome) | ⋮ menu → **Install app** |
+| iPhone / iPad (Safari) | Share → **Add to Home Screen** |
+| Mac (Safari 17+) | File → **Add to Dock** |
 
-The installers aren't code-signed, because signing certificates cost money:
+**Settings → Install app** in Aether shows the same steps. Then turn on **Settings → Notifications → Allow desktop alerts**.
 
-- **Windows** shows a SmartScreen prompt. Click **More info → Run anyway**.
-- **macOS** blocks the first launch. Right-click the app, choose **Open**, then confirm.
+(An optional Electron build also lives in `desktop/` and the **Desktop app** workflow. Nothing builds it unless you run that workflow.)
 
 ## Backups
 
