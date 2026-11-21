@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { type AppEnv, bad, body, forbidden, getSetting, id, isAdmin, notFound, now, requireRank, setSetting, toApi, visibleProjects } from '../lib/core';
 import { ctxOf } from '../lib/auth';
-import { hub, record } from '../lib/events';
+import { broadcast, hub, record } from '../lib/events';
 import { mailConfig, sendMail, emailLayout } from '../lib/mail';
 
 export const system = new Hono<AppEnv>();
@@ -164,6 +164,35 @@ system.get('/files/:id', async (c) => {
       ...(a.mime === 'application/pdf' ? {} : { 'content-security-policy': "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox" }),
     },
   });
+});
+
+// ---------- clear workspace content (owner only) ----------
+// Removes all projects, tasks, research, competitions, equipment, events and history.
+// Keeps people, roles, settings (email, GitHub) and the #general / #random channels.
+system.post('/admin/clear-content', async (c) => {
+  const me = c.get('user');
+  if (me.role !== 'owner') throw forbidden('Only the owner can clear the workspace.');
+  const b = await body(c);
+  const lab = (await getSetting(c.env, 'lab_name')) ?? 'Aether';
+  if (String(b.confirm ?? '').trim() !== lab) throw bad(`Type the lab name “${lab}” to confirm.`);
+  const db = c.env.DB;
+  await db.batch([
+    db.prepare(`DELETE FROM projects`), // cascades tasks, milestones, deps, comments, commits, project channels
+    db.prepare(`DELETE FROM papers`),
+    db.prepare(`DELETE FROM collections`),
+    db.prepare(`DELETE FROM competitions`),
+    db.prepare(`DELETE FROM equipment`), // cascades bookings, maintenance logs
+    db.prepare(`DELETE FROM calendar_events`),
+    db.prepare(`DELETE FROM achievements`),
+    db.prepare(`DELETE FROM notifications`),
+    db.prepare(`DELETE FROM activity WHERE audit=0`),
+    db.prepare(`DELETE FROM attachments WHERE id NOT IN (SELECT attachment_id FROM messages WHERE attachment_id IS NOT NULL)`),
+  ]);
+  const ctx = ctxOf(c);
+  for (const e of ['projects', 'tasks', 'milestones', 'papers', 'collections', 'competitions', 'equipment', 'bookings', 'events', 'achievements']) broadcast(ctx, { t: 'reload', e });
+  broadcast(ctx, { t: 'channels' });
+  await record(ctx, { actorId: me.id, verb: 'cleared', entityType: 'workspace', entityId: 'lab', summary: 'cleared all workspace content (projects, research, competitions, equipment, events)', audit: true });
+  return c.json({ ok: true });
 });
 
 // ---------- data export (owner/admin) ----------

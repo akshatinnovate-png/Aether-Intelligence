@@ -57,6 +57,7 @@ export default function Settings() {
           {section === 'email' && admin && <Email />}
           {section === 'workspace' && admin && <Workspace />}
           {section === 'data' && admin && <Data />}
+          {section === 'data' && me.role === 'owner' && <ClearWorkspace />}
         </div>
       </div>
     </div>
@@ -666,6 +667,41 @@ function Workspace() {
           Save
         </button>
       </div>
+    </Section>
+  );
+}
+
+function ClearWorkspace() {
+  const settings = useSettings();
+  const lab = String(settings.lab_name ?? 'Aether');
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  return (
+    <Section title="Clear workspace" desc="Removes every project (with its tasks, milestones and project channel), all research, competitions, equipment, bookings, events, achievements and activity. Keeps people, roles, email and GitHub settings, #general and #random. Use it to remove the example data. Cannot be undone — export first if unsure.">
+      <Field label={`Type “${lab}” to confirm`}>
+        <input className="input" value={text} onChange={(e) => setText(e.target.value)} placeholder={lab} />
+      </Field>
+      <button
+        className="btn danger"
+        style={{ alignSelf: 'flex-start' }}
+        disabled={text.trim() !== lab || busy}
+        onClick={async () => {
+          if (!(await confirmDialog('Clear all workspace content?', 'Projects, tasks, research, competitions, equipment and events will be deleted for everyone.', { danger: true, ok: 'Clear everything' }))) return;
+          setBusy(true);
+          try {
+            await api.post('/api/admin/clear-content', { confirm: text.trim() });
+            await qc.invalidateQueries();
+            setText('');
+            toast({ title: 'Workspace cleared', body: 'Start fresh: create your first project.' });
+          } catch (e) {
+            toastError(e);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        Clear workspace
+      </button>
     </Section>
   );
 }
