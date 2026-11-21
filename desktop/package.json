@@ -1,6 +1,7 @@
 {
   "name": "aether-desktop",
   "productName": "Aether",
+  "desktopName": "aether.desktop",
   "version": "1.0.0",
   "description": "Aether — the lab operating system, as a desktop app.",
   "author": "Aether Lab",
@@ -14,6 +15,7 @@
   "build": {
     "appId": "lab.aether.desktop",
     "productName": "Aether",
+  "desktopName": "aether.desktop",
     "directories": {
       "output": "dist",
       "buildResources": "build"
