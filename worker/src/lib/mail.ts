@@ -145,13 +145,15 @@ export async function sendMail(env: Env, mail: Mail, cfgOverride?: MailConfig): 
   }
 }
 
+const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
 export function emailLayout(title: string, bodyHtml: string, cta?: { label: string; url: string }) {
   return `<!doctype html><html><body style="margin:0;background:#0b0b0c;padding:32px 16px;font-family:Inter,-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#e8e8e6">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;border:1px solid #262628;background:#121214">
 <tr><td style="padding:20px 28px;border-bottom:1px solid #262628;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#9a9a96">Aether · Lab OS</td></tr>
 <tr><td style="padding:28px">
-<h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:26px;line-height:1.25;color:#f4f4f2">${title}</h1>
+<h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:26px;line-height:1.25;color:#f4f4f2">${esc(title)}</h1>
 <div style="font-size:15px;line-height:1.6;color:#c9c9c5">${bodyHtml}</div>
 ${cta ? `<p style="margin:28px 0 8px"><a href="${cta.url}" style="display:inline-block;background:#d4ff3a;color:#0b0b0c;text-decoration:none;font-weight:600;font-size:14px;padding:12px 20px">${cta.label}</a></p><p style="font-size:12px;color:#7a7a76;word-break:break-all">${cta.url}</p>` : ''}
 </td></tr></table></td></tr></table></body></html>`;

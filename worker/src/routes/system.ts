@@ -160,7 +160,8 @@ system.get('/files/:id', async (c) => {
       'content-disposition': `${inline ? 'inline' : 'attachment'}; filename="${encodeURIComponent(a.name)}"`,
       'cache-control': 'private, max-age=31536000, immutable',
       'x-content-type-options': 'nosniff',
-      'content-security-policy': "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox",
+      // PDFs need the browser's viewer; everything else is locked down.
+      ...(a.mime === 'application/pdf' ? {} : { 'content-security-policy': "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox" }),
     },
   });
 });

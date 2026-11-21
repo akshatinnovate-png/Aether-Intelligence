@@ -135,7 +135,7 @@ async function issueLink(c: C, opts: { email: string; role: string; kind: 'invit
           subject: `${me.name} invited you to ${lab} on Aether`,
           text: `${me.name} invited you to join ${lab} as ${opts.role}.\n\nAccept the invite: ${link}\n\nThe link expires in ${opts.days} days.`,
           html: emailLayout(
-            `Join ${escape(lab)}`,
+            `Join ${lab}`,
             `<p><strong style="color:#f4f4f2">${escape(me.name)}</strong> invited you to join <strong style="color:#f4f4f2">${escape(lab)}</strong> as <strong style="color:#f4f4f2">${opts.role}</strong>.</p><p>Aether is where the lab runs its projects, code, research, competitions and equipment. The link expires in ${opts.days} days.</p>`,
             { label: 'Accept invite', url: link },
           ),

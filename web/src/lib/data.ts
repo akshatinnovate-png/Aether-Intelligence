@@ -220,7 +220,9 @@ function handle(m: Live, meId: string) {
     case 'notification':
       qc.setQueryData<Notification[]>(['notifications'], (old) => (old ? [m.row, ...old] : old));
       toast({ title: m.row.title, body: m.row.body, link: m.row.link });
-      if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+      if (window.aetherDesktop) {
+        if (document.hidden || !document.hasFocus()) window.aetherDesktop.notify(m.row.title, m.row.body);
+      } else if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
         try {
           new Notification(m.row.title, { body: m.row.body, tag: m.row.id });
         } catch {

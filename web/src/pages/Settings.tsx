@@ -657,7 +657,7 @@ function Data() {
   const audit = useQuery({ queryKey: ['audit'], queryFn: () => api.get<Activity[]>('/api/audit') });
   return (
     <>
-      <Section title="Export" desc="Everything in the workspace as one JSON file (passwords and tokens excluded). Cloudflare D1 also keeps 30 days of point-in-time recovery.">
+      <Section title="Export" desc="Everything in the workspace as one JSON file (passwords and tokens excluded). Cloudflare D1 also keeps point-in-time recovery (7 days on the free plan).">
         <a className="btn" style={{ alignSelf: 'flex-start' }} href="/api/export">
           <Database /> Download export
         </a>
