@@ -439,3 +439,42 @@ lab.put('/papers/:id/progress', async (c) => {
   else if (!prev && progress > 0) await record(ctx, { actorId: me.id, verb: 'reading', entityType: 'paper', entityId: p.id, summary: `started reading “${p.title}”` });
   return c.json(row);
 });
+
+/** Fill paper metadata from an arXiv id/URL or a DOI (server-side, so no CORS issues). */
+lab.get('/papers/lookup', async (c) => {
+  const q = (c.req.query('q') ?? '').trim();
+  const arxiv = /(?:arxiv\.org\/(?:abs|pdf)\/)?(\d{4}\.\d{4,5})(?:v\d+)?/i.exec(q);
+  const doi = /(10\.\d{4,9}\/[^\s]+)/.exec(q);
+  if (arxiv) {
+    const res = await fetch(`https://export.arxiv.org/api/query?id_list=${arxiv[1]}`, { headers: { 'User-Agent': 'aether-lab-os' } });
+    const xml = await res.text();
+    const entry = xml.split('<entry>')[1];
+    if (!entry) throw notFound('arXiv paper');
+    const tag = (t: string) => (new RegExp(`<${t}[^>]*>([\\s\\S]*?)</${t}>`).exec(entry)?.[1] ?? '').replace(/\s+/g, ' ').trim();
+    const authors = [...entry.matchAll(/<name>([\s\S]*?)<\/name>/g)].map((m) => m[1].trim());
+    const cats = [...entry.matchAll(/<category[^>]*term="([^"]+)"/g)].map((m) => m[1].toLowerCase()).slice(0, 4);
+    return c.json({ title: tag('title'), abstract: tag('summary'), authors: authors.join(', '), year: Number(tag('published').slice(0, 4)) || null, url: `https://arxiv.org/abs/${arxiv[1]}`, venue: 'arXiv', tags: cats.join(', ') });
+  }
+  if (doi) {
+    const res = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi[1])}`, { headers: { 'User-Agent': 'aether-lab-os (mailto:noreply@example.com)' } });
+    if (!res.ok) throw notFound('DOI');
+    const m = ((await res.json()) as { message: Record<string, unknown> }).message as {
+      title?: string[];
+      author?: { given?: string; family?: string }[];
+      'container-title'?: string[];
+      issued?: { 'date-parts'?: number[][] };
+      abstract?: string;
+      URL?: string;
+    };
+    return c.json({
+      title: m.title?.[0] ?? '',
+      authors: (m.author ?? []).map((a) => [a.given, a.family].filter(Boolean).join(' ')).join(', '),
+      venue: m['container-title']?.[0] ?? '',
+      year: m.issued?.['date-parts']?.[0]?.[0] ?? null,
+      abstract: (m.abstract ?? '').replace(/<[^>]+>/g, '').trim(),
+      url: m.URL ?? '',
+      doi: doi[1],
+    });
+  }
+  throw bad('Enter an arXiv id (e.g. 2212.04356), an arXiv URL or a DOI.');
+});
