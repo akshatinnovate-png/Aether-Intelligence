@@ -231,6 +231,32 @@ await page.waitForTimeout(800);
 await shot('25-light-dashboard');
 await api('/api/me/prefs', 'PUT', { theme: 'dark' });
 
+// 12. Deliverables + assistant (only when a fake Groq is configured via GROQ_TEST=1)
+if (process.env.GROQ_TEST) {
+  await api('/api/assistant/settings', 'PUT', { apiKey: 'gsk_test' });
+  await page.goto(BASE);
+  await page.locator('.topbar .ask-trigger').click();
+  await page.locator('.assistant-panel textarea').fill('ask riya make me the pitch deck and submit me the google drive link');
+  await page.locator('.assistant-panel textarea').press('Enter');
+  await page.locator('.aaction').first().waitFor({ timeout: 15000 });
+  ok('assistant created the task', (await page.locator('.aaction').first().innerText()).includes('Make the pitch deck'));
+  await shot('26-assistant');
+  // Riya hands in a Drive link from her Submissions page.
+  await p2.goto(`${BASE}/submissions`);
+  await p2.getByPlaceholder(/Paste the Google Drive link/).first().fill('https://docs.google.com/presentation/d/abc/edit');
+  await p2.getByRole('button', { name: 'Submit' }).first().click();
+  await p2.getByText('Nothing to hand in').waitFor({ timeout: 8000 }).then(() => ok('teammate submitted Drive link', true), () => ok('teammate submitted Drive link', false));
+  await shot('27-submitted', p2);
+  // Lead approves from Submissions.
+  await page.keyboard.press('Escape');
+  await page.goto(`${BASE}/submissions`);
+  await page.getByRole('button', { name: 'Approve' }).first().click();
+  await page.waitForTimeout(1200);
+  const done = (await api('/api/tasks')).json.find((t) => t.title === 'Make the pitch deck');
+  ok('approval completes the task', done?.status === 'done' && done?.submission?.status === 'approved', done?.status);
+  await shot('28-submissions');
+}
+
 ok('no runtime errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 await browser.close();
 const failed = results.filter((r) => !r.pass);

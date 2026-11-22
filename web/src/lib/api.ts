@@ -5,7 +5,7 @@ export class ApiError extends Error {
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const init: RequestInit = { method, credentials: 'same-origin', headers: { 'x-aether': '1' } };
+  const init: RequestInit = { method, credentials: 'same-origin', headers: { 'x-aether': '1', 'x-tz-offset': String(new Date().getTimezoneOffset()) } };
   if (body instanceof FormData) init.body = body;
   else if (body !== undefined) {
     init.body = JSON.stringify(body);

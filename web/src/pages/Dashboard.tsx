@@ -1,10 +1,11 @@
 import { useMemo, useState, useEffect, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { format, addDays } from 'date-fns';
-import { AlertTriangle, ArrowUpRight, EyeOff, GitBranch } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, EyeOff, GitBranch, Sparkles } from 'lucide-react';
 import { useActivity, useBookings, useCompetitions, useEquipment, useEvents, useMe, useMilestones, usePapers, useProjects, useTasks, useUsers } from '../lib/data';
 import { ago, collapseActivity, countdown, d, deadlines, dueLabel, equipmentState, EQUIP_CAT, HEALTH, isOverdue, KIND_LABEL, loadTone, projectStats, STAGE_LABEL, today, workload } from '../lib/derive';
 import { useUI } from '../lib/store';
+import { canReviewTask, deliverableState } from '../components/Deliverable';
 import { Avatar, AvatarStack, Bar, Empty, PriorityIcon, Sparkline, StatusIcon } from '../components/ui';
 import { savePrefs } from '../components/Shell';
 import type { Activity } from '../types';
@@ -84,6 +85,8 @@ export default function Dashboard() {
           </Link>
         </div>
       </div>
+
+      <Attention />
 
       <div className="stats" style={{ marginBottom: 12 }}>
         <Stat to="/projects" label="Active projects" value={active.length} detail={`${projects.filter((p) => !p.archived).length} total · ${projects.filter((p) => p.status === 'done').length} done`} />
@@ -501,5 +504,49 @@ function CompetitionPanel({ onHide }: { onHide: () => void }) {
         )}
       </div>
     </Panel>
+  );
+}
+
+/** The first thing on Home: what needs you right now, each with a one-click way to act. */
+function Attention() {
+  const me = useMe()!;
+  const tasks = useTasks();
+  const projects = useProjects();
+  const setAssistant = useUI((s) => s.setAssistant);
+  const proj = (id: string) => projects.find((p) => p.id === id);
+  const handIn = tasks.filter((t) => t.assigneeId === me.id && t.status !== 'done' && ['to_submit', 'changes'].includes(deliverableState(t)));
+  const review = tasks.filter((t) => t.submission?.status === 'pending' && canReviewTask(me, t, proj(t.projectId)));
+  const late = tasks.filter((t) => t.assigneeId === me.id && isOverdue(t));
+  const Card = ({ title, items, empty, to, tone }: { title: string; items: typeof tasks; empty: string; to: string; tone?: string }) => (
+    <section className="panel" style={{ borderColor: items.length ? `var(--${tone ?? 'accent'}-line, var(--accent-line))` : undefined }}>
+      <Link to={to} className="panel-head">
+        <span className="eyebrow grow">{title}</span>
+        <span className={`badge mono${items.length ? ' solid' : ''}`}>{items.length}</span>
+      </Link>
+      <div className="list">
+        {items.slice(0, 4).map((t) => (
+          <Link key={t.id} to={`/projects/${proj(t.projectId)?.key}?task=${t.id}`} className="li">
+            <span className="key">{proj(t.projectId)?.key}-{t.number}</span>
+            <span className="small trunc grow">{t.title}</span>
+            {t.dueDate && <span className={`xs ${dueLabel(t.dueDate).tone || 'muted'}`}>{dueLabel(t.dueDate).text}</span>}
+          </Link>
+        ))}
+        {!items.length && <div className="li faint small">{empty}</div>}
+      </div>
+    </section>
+  );
+  return (
+    <>
+      <button className="ask-trigger" style={{ width: '100%', height: 44, fontSize: 14, marginBottom: 12, justifyContent: 'flex-start', padding: '0 16px' }} onClick={() => setAssistant(true)}>
+        <Sparkles />
+        <span className="grow" style={{ textAlign: 'left', fontWeight: 400 }}>Ask Aether — “Ask Soumya to make the pitch deck by Friday and submit the Drive link”</span>
+        <span className="kbd">⌘J</span>
+      </button>
+      <div className="attention">
+        <Card title="Hand in · Google Drive" items={handIn} empty="Nothing to hand in." to="/submissions" />
+        <Card title="Waiting for your review" items={review} empty="Nothing to review." to="/submissions" />
+        <Card title="Your overdue tasks" items={late} empty="Nothing overdue." to="/my-work?view=overdue" tone="red" />
+      </div>
+    </>
   );
 }

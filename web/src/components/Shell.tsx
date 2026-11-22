@@ -6,6 +6,8 @@ import {
   Boxes,
   Calendar,
   CheckSquare,
+  FileUp,
+  Sparkles,
   Download,
   ChevronsLeft,
   Code2,
@@ -27,6 +29,8 @@ import { api } from '../lib/api';
 import { qc } from '../lib/data';
 import { Avatar, ConfirmHost, Toasts } from './ui';
 import { CommandPalette } from './CommandPalette';
+import { AssistantPanel } from './Assistant';
+import { canReviewTask, deliverableState } from './Deliverable';
 import { TaskDrawer } from './TaskDrawer';
 import { CreateTaskModal } from './CreateTask';
 import { CreateProjectModal } from './CreateProject';
@@ -77,6 +81,9 @@ export function Shell() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setPalette(true);
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
+        e.preventDefault();
+        useUI.getState().setAssistant(!useUI.getState().assistantOpen);
       } else if (!typing && !e.metaKey && !e.ctrlKey && !e.altKey) {
         if (e.key === 'c') {
           e.preventDefault();
@@ -106,6 +113,7 @@ export function Shell() {
       </div>
       {taskId && <TaskDrawer id={taskId} />}
       <CommandPalette />
+      <AssistantPanel />
       <CreateTaskModal />
       <CreateProjectModal />
       <Toasts />
@@ -137,6 +145,9 @@ function Sidebar({ collapsed }: { collapsed: boolean }) {
   const meUser = users.find((u) => u.id === me.id);
   const online = useUI((s) => s.online);
   const mine = tasks.filter((t) => t.assigneeId === me.id && t.status !== 'done');
+  const subCount =
+    tasks.filter((t) => t.assigneeId === me.id && t.status !== 'done' && ['to_submit', 'changes'].includes(deliverableState(t))).length +
+    tasks.filter((t) => t.submission?.status === 'pending' && canReviewTask(me, t, projects.find((p) => p.id === t.projectId))).length;
   const overdue = mine.filter(isOverdue).length;
   const unread = notifications.filter((n) => !n.readAt).length;
   const chatUnread = channels.reduce((s, c) => s + c.unread, 0);
@@ -168,7 +179,13 @@ function Sidebar({ collapsed }: { collapsed: boolean }) {
             <Menu />
           </button>
         )}
-        {item('/', <LayoutDashboard />, 'Dashboard', null, true)}
+        {item('/', <LayoutDashboard />, 'Home', null, true)}
+        <button className="nav-item" title={collapsed ? 'Ask Aether (⌘J)' : undefined} onClick={() => useUI.getState().setAssistant(true)}>
+          <Sparkles style={{ color: 'var(--accent-text)' }} />
+          <span className="nav-text">Ask Aether</span>
+          <span className="count">⌘J</span>
+        </button>
+        {item('/submissions', <FileUp />, 'Submissions', subCount ? <span className="count hot">{subCount}</span> : null)}
         {item('/my-work', <CheckSquare />, 'My work', mine.length ? <span className={`count${overdue ? ' hot' : ''}`}>{mine.length}</span> : null)}
         {item('/inbox', <Bell />, 'Inbox', unread ? <span className="count hot">{unread}</span> : null)}
         {item('/chat', <MessagesSquare />, 'Chat', chatUnread ? <span className={`count${chatHot ? ' hot' : ''}`}>{chatUnread}</span> : null)}
@@ -206,7 +223,7 @@ function Sidebar({ collapsed }: { collapsed: boolean }) {
 }
 
 const SECTION: Record<string, string> = {
-  '': 'Dashboard',
+  '': 'Home',
   'my-work': 'My work',
   inbox: 'Inbox',
   chat: 'Chat',
@@ -215,6 +232,7 @@ const SECTION: Record<string, string> = {
   code: 'Code',
   members: 'Members',
   research: 'Research vault',
+  submissions: 'Submissions',
   competitions: 'Competitions',
   equipment: 'Equipment',
   settings: 'Settings',
@@ -253,6 +271,10 @@ function Topbar() {
         )}
       </div>
       <div className="grow desktop-only" />
+      <button className="ask-trigger" onClick={() => useUI.getState().setAssistant(true)} title="Ask Aether (⌘J)">
+        <Sparkles />
+        <span className="desktop-only">Ask Aether</span>
+      </button>
       <button className="search-trigger" onClick={() => setPalette(true)}>
         <Search />
         <span className="grow" style={{ textAlign: 'left' }}>

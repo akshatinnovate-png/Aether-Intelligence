@@ -32,6 +32,8 @@ function CreateTaskForm({ defaults: createTask }: { defaults: Partial<Task> }) {
     estimate: 2,
     milestoneId: (createTask.milestoneId ?? null) as string | null,
     labels: [] as string[],
+    deliverable: !!createTask.deliverable,
+    deliverableNote: '',
   }));
   const [more, setMore] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -104,6 +106,15 @@ function CreateTaskForm({ defaults: createTask }: { defaults: Partial<Task> }) {
         </div>
         <input autoFocus className="input" style={{ height: 40, fontSize: 16, fontFamily: 'var(--serif)' }} placeholder="Task title" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
         <textarea className="textarea" placeholder="Description (markdown)" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
+        <div className="panel" style={{ padding: 12, borderColor: f.deliverable ? 'var(--accent-line)' : undefined }}>
+          <label className="check small">
+            <input type="checkbox" checked={f.deliverable} onChange={(e) => setF({ ...f, deliverable: e.target.checked })} />
+            <span>
+              <strong style={{ fontWeight: 500 }}>Needs a deliverable</strong> <span className="muted">— the assignee submits a Google Drive link and you review it</span>
+            </span>
+          </label>
+          {f.deliverable && <input className="input sm" style={{ marginTop: 8 }} placeholder="What should be handed in? e.g. Pitch deck as Google Slides" value={f.deliverableNote} onChange={(e) => setF({ ...f, deliverableNote: e.target.value })} />}
+        </div>
         {!more ? (
           <button className="btn ghost sm" style={{ alignSelf: 'flex-start' }} onClick={() => setMore(true)}>
             More fields…

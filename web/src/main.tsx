@@ -28,6 +28,7 @@ const Chat = lazy(() => import('./pages/Chat'));
 const Code = lazy(() => import('./pages/Code'));
 const RepoView = lazy(() => import('./pages/RepoView'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Submissions = lazy(() => import('./pages/Submissions'));
 
 // Apply the last theme before React renders, so there is no flash.
 try {
@@ -91,6 +92,7 @@ createRoot(document.getElementById('root')!).render(
               <Route index element={<Dashboard />} />
               <Route path="my-work" element={<MyWork />} />
               <Route path="inbox" element={<Inbox />} />
+              <Route path="submissions" element={<Submissions />} />
               <Route path="projects" element={<Projects />} />
               <Route path="projects/:key/*" element={<ProjectWorkspace />} />
               <Route path="members" element={<Members />} />

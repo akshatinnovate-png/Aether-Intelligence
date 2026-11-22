@@ -2,7 +2,7 @@ import { GithubMark } from '../components/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Bell, Building2, Copy, Database, KeyRound, Laptop, Mail, Palette, ShieldCheck, User, Users } from 'lucide-react';
+import { Sparkles, Bell, Building2, Copy, Database, KeyRound, Laptop, Mail, Palette, ShieldCheck, User, Users } from 'lucide-react';
 import { api } from '../lib/api';
 import { qc, useMe, useSettings, useUsers } from '../lib/data';
 import { ago, can, fmtDateTime, RANK, ROLE_DESC, ROLE_LABEL } from '../lib/derive';
@@ -20,6 +20,7 @@ const SECTIONS = [
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'integrations', label: 'GitHub', icon: GithubMark },
   { id: 'desktop', label: 'Install app', icon: Laptop },
+  { id: 'assistant', label: 'Assistant (Groq)', icon: Sparkles, admin: true },
   { id: 'team', label: 'Team & roles', icon: Users, admin: true },
   { id: 'email', label: 'Email delivery', icon: Mail, admin: true },
   { id: 'workspace', label: 'Workspace', icon: Building2, admin: true },
@@ -53,6 +54,7 @@ export default function Settings() {
           {section === 'notifications' && <Notifications />}
           {section === 'integrations' && <Integrations />}
           {section === 'desktop' && <Desktop />}
+          {section === 'assistant' && admin && <AssistantSettings />}
           {section === 'team' && admin && <Team />}
           {section === 'email' && admin && <Email />}
           {section === 'workspace' && admin && <Workspace />}
@@ -668,6 +670,73 @@ function Workspace() {
         </button>
       </div>
     </Section>
+  );
+}
+
+function AssistantSettings() {
+  const status = useQuery({ queryKey: ['assistant-status'], queryFn: () => api.get<{ configured: boolean; model: string | null }>('/api/assistant/status') });
+  const models = useQuery({ queryKey: ['assistant-models'], queryFn: () => api.get<string[]>('/api/assistant/models'), enabled: !!status.data?.configured, retry: false });
+  const [key, setKey] = useState('');
+  const [busy, setBusy] = useState(false);
+  const save = async (b: Record<string, unknown>, msg: string) => {
+    setBusy(true);
+    try {
+      const r = await api.put<{ model: string | null }>('/api/assistant/settings', b);
+      setKey('');
+      await qc.invalidateQueries({ queryKey: ['assistant-status'] });
+      await qc.invalidateQueries({ queryKey: ['assistant-models'] });
+      toast({ title: msg, body: r.model ? `Model: ${r.model}` : undefined });
+    } catch (e) {
+      toastError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <>
+      <Section
+        title="Groq API key"
+        desc={
+          <>
+            Free. Sign in at <a className="accent-text" href="https://console.groq.com/keys" target="_blank" rel="noreferrer">console.groq.com/keys</a>, click <strong>Create API Key</strong>, name it “Aether”, copy it and paste it here. It is encrypted before it is stored and never sent to browsers.
+          </>
+        }
+      >
+        {status.data?.configured && <div className="ok-box">Connected{status.data.model ? ` · ${status.data.model}` : ''}. Everyone except guests can use Ask Aether (⌘J).</div>}
+        <div className="row gap-6">
+          <input className="input mono" type="password" autoComplete="off" placeholder={status.data?.configured ? 'Paste a new key to replace it' : 'gsk_…'} value={key} onChange={(e) => setKey(e.target.value)} />
+          <button className="btn primary" disabled={!key.trim() || busy} onClick={() => save({ apiKey: key.trim() }, 'Assistant connected')}>
+            {busy ? 'Checking…' : 'Save'}
+          </button>
+        </div>
+        {status.data?.configured && (
+          <button className="btn ghost sm" style={{ alignSelf: 'flex-start' }} onClick={() => save({ remove: true }, 'Assistant disconnected')}>
+            Remove key
+          </button>
+        )}
+      </Section>
+      {status.data?.configured && (
+        <Section title="Model" desc="Aether picks a capable model automatically. Change it if Groq retires one or you want faster answers.">
+          <select className="select" value={status.data.model ?? ''} onChange={(e) => save({ model: e.target.value }, 'Model changed')}>
+            {(models.data ?? (status.data.model ? [status.data.model] : [])).map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        </Section>
+      )}
+      <Section title="What it can do" desc="It acts as the person asking, so it can only do what they could do by hand.">
+        <ul className="small t2" style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
+          <li>Assign work: “Ask Soumya to make the pitch deck by Friday and submit the Drive link”</li>
+          <li>Hand in and review: “Approve TF1-3” · “Send GEN-2 back: add the budget slide”</li>
+          <li>Answer questions: “What’s overdue?” · “What is Saharsh working on?”</li>
+          <li>Schedule: “Team review tomorrow 5pm with everyone”</li>
+          <li>Message: “Tell #general the demo moved to Thursday”</li>
+          <li>Create projects and update tasks</li>
+        </ul>
+      </Section>
+    </>
   );
 }
 

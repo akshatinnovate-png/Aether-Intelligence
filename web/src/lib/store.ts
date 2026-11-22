@@ -19,6 +19,8 @@ interface UI {
   createTaskSeq: number;
   createProject: boolean;
   connected: boolean;
+  assistantOpen: boolean;
+  setAssistant(open: boolean): void;
   setPalette(open: boolean): void;
   setMobileNav(open: boolean): void;
   setOnline(ids: string[]): void;
@@ -42,6 +44,8 @@ export const useUI = create<UI>((set, get) => ({
   createTaskSeq: 0,
   createProject: false,
   connected: false,
+  assistantOpen: false,
+  setAssistant: (assistantOpen) => set({ assistantOpen }),
   setPalette: (paletteOpen) => set({ paletteOpen }),
   setMobileNav: (mobileNav) => set({ mobileNav }),
   setOnline: (online) => set({ online }),

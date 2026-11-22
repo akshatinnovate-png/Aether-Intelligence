@@ -89,6 +89,22 @@ export interface Task {
   blockedBy: string[];
   commitCount: number;
   commentCount: number;
+  deliverable: boolean;
+  deliverableNote: string;
+  submission: Submission | null;
+}
+export interface Submission {
+  id: string;
+  taskId?: string;
+  url: string;
+  title: string;
+  note: string;
+  status: 'pending' | 'approved' | 'changes_requested';
+  userId: string | null;
+  reviewerId: string | null;
+  reviewNote: string;
+  createdAt: string;
+  reviewedAt: string | null;
 }
 export interface Competition {
   id: string;

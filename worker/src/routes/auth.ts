@@ -110,6 +110,8 @@ auth.post('/invite/:token', async (c) => {
         `INSERT INTO users (id, email, name, password_hash, role, title, avatar_color, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)`,
       ).bind(uid, inv.email, name, await hashPassword(password), inv.role, String(b.title ?? '').slice(0, 80), randomColor(), t, t),
       c.env.DB.prepare(`UPDATE invites SET accepted_at=? WHERE id=?`).bind(t, inv.id),
+      // Everyone belongs to the General project, where unscoped requests land.
+      c.env.DB.prepare(`INSERT OR IGNORE INTO project_members (project_id, user_id, added_at) SELECT id, ?, ? FROM projects WHERE key='GEN'`).bind(uid, t),
     ]);
     const admins = await c.env.DB.prepare(`SELECT id FROM users WHERE role IN ('owner','admin')`).all<{ id: string }>();
     const { publish } = await import('../lib/events');

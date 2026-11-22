@@ -11,6 +11,9 @@ import { lab } from './routes/lab';
 import { chat } from './routes/chat';
 import { github } from './routes/github';
 import { system } from './routes/system';
+import { deliver } from './routes/deliver';
+import { assistant } from './routes/assistant';
+import { setInternalApp } from './lib/internal';
 
 export { Hub } from './hub';
 
@@ -44,7 +47,10 @@ api.route('/', work);
 api.route('/', lab);
 api.route('/', chat);
 api.route('/', system);
+api.route('/', deliver);
+api.route('/', assistant);
 app.route('/api', api);
+setInternalApp(app);
 
 app.all('/api/*', (c) => c.json({ error: 'Not found' }, 404));
 

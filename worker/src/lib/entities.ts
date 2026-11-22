@@ -47,9 +47,13 @@ export const ENTITIES = {
     sql: `SELECT x.*,
             (SELECT json_group_array(blocked_by_id) FROM task_deps d WHERE d.task_id=x.id) AS blocked_by,
             (SELECT COUNT(*) FROM task_commits k WHERE k.task_id=x.id) AS commit_count,
-            (SELECT COUNT(*) FROM task_comments k WHERE k.task_id=x.id) AS comment_count
+            (SELECT COUNT(*) FROM task_comments k WHERE k.task_id=x.id) AS comment_count,
+            (SELECT json_object('id', s.id, 'url', s.url, 'title', s.title, 'note', s.note, 'status', s.status, 'userId', s.user_id,
+                                'reviewerId', s.reviewer_id, 'reviewNote', s.review_note, 'createdAt', s.created_at, 'reviewedAt', s.reviewed_at)
+               FROM submissions s WHERE s.task_id=x.id ORDER BY s.created_at DESC LIMIT 1) AS submission
           FROM tasks x`,
-    json: ['labels', 'blocked_by'],
+    json: ['labels', 'blocked_by', 'submission'],
+    bools: ['deliverable'],
     order: 'x.position',
     projectCol: 'x.project_id',
   },

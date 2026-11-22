@@ -238,6 +238,8 @@ const taskSpec: Spec = {
   startDate: { col: 'start_date', type: 'date' },
   dueDate: { col: 'due_date', type: 'date' },
   position: { col: 'position', type: 'num' },
+  deliverable: { col: 'deliverable', type: 'bool' },
+  deliverableNote: { col: 'deliverable_note', type: 'text', max: 2000 },
 };
 
 type TaskRow = { id: string; project_id: string; number: number; title: string; status: string; assignee_id: string | null; reporter_id: string | null; due_date: string | null; priority: string };
@@ -413,15 +415,17 @@ work.get('/tasks/:id/detail', async (c) => {
   const t = await taskWithProject(c, c.req.param('id'));
   const vis = await visibleProjects(c.env, c.get('user'));
   if (vis && !vis.includes(t.project_id)) throw forbidden();
-  const [comments, commits, activity] = await Promise.all([
+  const [comments, commits, activity, submissions] = await Promise.all([
     c.env.DB.prepare(`SELECT * FROM task_comments WHERE task_id=? ORDER BY created_at`).bind(t.id).all(),
     c.env.DB.prepare(`SELECT * FROM task_commits WHERE task_id=? ORDER BY created_at DESC`).bind(t.id).all(),
     c.env.DB.prepare(`SELECT * FROM activity WHERE entity_type='task' AND entity_id=? ORDER BY created_at DESC LIMIT 50`).bind(t.id).all(),
+    c.env.DB.prepare(`SELECT * FROM submissions WHERE task_id=? ORDER BY created_at DESC`).bind(t.id).all(),
   ]);
   return c.json({
     comments: comments.results.map((r) => toApi(r)),
     commits: commits.results.map((r) => toApi(r)),
     activity: activity.results.map((r) => toApi(r, ['data'], ['audit'])),
+    submissions: submissions.results.map((r) => toApi(r)),
   });
 });
 

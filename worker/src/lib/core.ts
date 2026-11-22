@@ -7,6 +7,8 @@ export interface Env {
   ASSETS: Fetcher;
   APP_SECRET?: string;
   APP_URL?: string;
+  /** Only for tests: point the assistant at a fake Groq server. */
+  GROQ_BASE_URL?: string;
 }
 
 export type Role = 'owner' | 'admin' | 'lead' | 'member' | 'guest';
@@ -132,7 +134,7 @@ export async function decrypt(env: Env, blob: string | null | undefined): Promis
 }
 
 // ---------- settings ----------
-const SECRET_SETTINGS = new Set(['smtp_pass', 'github_client_secret', 'github_webhook_secret']);
+const SECRET_SETTINGS = new Set(['smtp_pass', 'github_client_secret', 'github_webhook_secret', 'groq_api_key']);
 export async function getSetting(env: Env, key: string): Promise<string | null> {
   const row = await env.DB.prepare(`SELECT value FROM settings WHERE key=?`).bind(key).first<{ value: string }>();
   if (!row) return null;

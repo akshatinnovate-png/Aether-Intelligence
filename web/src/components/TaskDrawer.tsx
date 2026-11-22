@@ -9,12 +9,14 @@ import { toast, toastError } from '../lib/store';
 import { Avatar, confirmDialog, Drawer, Picker, PriorityPicker, StatusIcon, StatusPicker, UserPicker } from './ui';
 import { Markdown } from './Markdown';
 import { Composer, encodeMentions } from './Composer';
-import type { Activity, Task } from '../types';
+import type { Activity, Submission, Task } from '../types';
+import { DeliverablePanel } from './Deliverable';
 
 interface Detail {
   comments: { id: string; userId: string | null; body: string; createdAt: string }[];
   commits: { sha: string; repo: string; message: string; author: string; url: string; createdAt: string }[];
   activity: Activity[];
+  submissions: Submission[];
 }
 
 export function TaskDrawer({ id }: { id: string }) {
@@ -121,6 +123,7 @@ export function TaskDrawer({ id }: { id: string }) {
             onBlur={() => title.trim() && title !== task.title && set({ title: title.trim() })}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), (e.target as HTMLTextAreaElement).blur())}
           />
+          {(task.deliverable || task.submission) && <DeliverablePanel task={task} history={detail.data?.submissions ?? (task.submission ? [task.submission] : [])} />}
           {openBlockers.length > 0 && (
             <div className="err-box row">
               <Lock size={13} /> Blocked by {openBlockers.map((b) => `${pmap.get(b.projectId)?.key}-${b.number}`).join(', ')}
@@ -297,6 +300,11 @@ export function TaskDrawer({ id }: { id: string }) {
           </Prop>
           <Prop label="Labels">
             <LabelEditor labels={task.labels} disabled={!canWrite} onChange={(labels) => set({ labels })} />
+          </Prop>
+          <Prop label="Deliverable">
+            <label className="check small" title="The assignee hands in a Google Drive link, which the requester reviews">
+              <input type="checkbox" disabled={!canWrite} checked={task.deliverable} onChange={(e) => set({ deliverable: e.target.checked })} /> Drive link required
+            </label>
           </Prop>
           <hr className="sep" />
           <div className="col gap-6 xs muted">

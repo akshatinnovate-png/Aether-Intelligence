@@ -3,7 +3,7 @@ import { DndContext, DragOverlay, PointerSensor, KeyboardSensor, TouchSensor, cl
 import { SortableContext, useSortable, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useSearchParams } from 'react-router-dom';
-import { GitCommitHorizontal, Lock, MessageSquare, Plus } from 'lucide-react';
+import { FileUp, GitCommitHorizontal, Lock, MessageSquare, Plus } from 'lucide-react';
 import { patchTask, save, useTasks, useUsers } from '../../lib/data';
 import { dueLabel, nextPosition, STATUS } from '../../lib/derive';
 import { toastError } from '../../lib/store';
@@ -164,6 +164,16 @@ function Card({ task, project, overlay, dragging }: { task: Task; project: Proje
       <div className="meta">
         <PriorityIcon p={task.priority} />
         {blocked && <Lock size={12} className="red" />}
+        {(task.deliverable || task.submission) && (
+          <span
+            className={`badge ${task.submission?.status === 'approved' ? 'green' : task.submission?.status === 'pending' ? 'amber' : task.submission?.status === 'changes_requested' ? 'red' : 'accent'}`}
+            title={task.submission ? `Drive deliverable: ${task.submission.status.replace('_', ' ')}` : 'Drive deliverable not submitted yet'}
+            style={{ height: 17, padding: '0 5px' }}
+          >
+            <FileUp size={10} />
+            {task.submission ? (task.submission.status === 'approved' ? '✓' : task.submission.status === 'pending' ? 'review' : 'redo') : 'due'}
+          </span>
+        )}
         {due.text && <span className={`mono ${due.tone}`}>{due.text}</span>}
         {task.labels.slice(0, 2).map((l) => (
           <span key={l} className="tag">

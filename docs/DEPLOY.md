@@ -109,6 +109,26 @@ There's nothing to download. Everyone installs Aether straight from the browser 
 
 (An optional Electron build also lives in `desktop/` and the **Desktop app** workflow. Nothing builds it unless you run that workflow.)
 
+## 8. Ask Aether (Groq assistant, free)
+
+1. Sign in at <https://console.groq.com/keys>, then **Create API Key** and copy it.
+2. In Aether, open **Settings → Assistant (Groq)**, paste the key and click **Save**. Aether picks a capable model automatically.
+3. Everyone except guests can now press **⌘J** (Ctrl+J), or click **Ask Aether**, and type or speak requests like:
+   - "Ask Soumya to make the pitch deck by Friday and submit me the Google Drive link"
+   - "What do I need to review?" · "Approve GEN-1" · "Team review tomorrow 5pm with everyone"
+
+The assistant acts as the person asking, so it can only do what they could do by hand.
+
+## Deliverables (Google Drive)
+
+A task can require a deliverable. Tick **Needs a deliverable** when creating it, or let the assistant do it. Then:
+
+1. The assignee pastes a Google Drive link. Only `drive.google.com` and `docs.google.com` links are accepted.
+2. The task moves to **In review**, and the requester is notified.
+3. The requester clicks **Approve**, which completes the task, or **Request changes** with a note, which sends it back.
+
+The **Submissions** page in the sidebar collects everything you need to hand in and everything waiting for your review.
+
 ## Backups
 
 - **Settings → Data & audit log → Download export** saves everything as JSON.
