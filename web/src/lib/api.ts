@@ -22,6 +22,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   if (!res.ok) {
     const msg = (data as { error?: string })?.error ?? (typeof data === 'string' && data ? data : res.statusText);
     if (res.status === 401 && !path.startsWith('/api/auth')) window.dispatchEvent(new CustomEvent('aether:signed-out'));
+    if (res.status === 412 && path.startsWith('/api/github')) window.dispatchEvent(new CustomEvent('aether:github-reconnect'));
     throw new ApiError(res.status, msg);
   }
   return data as T;

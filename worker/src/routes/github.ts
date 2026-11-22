@@ -6,6 +6,28 @@ import { type Ctx, publish, record } from '../lib/events';
 import { taskSideEffects } from './work';
 
 export const github = new Hono<AppEnv>();
+
+/** GitHub rejected the stored token (revoked, expired or reset). The user must reconnect. */
+export class GhAuthError extends HttpError {
+  constructor() {
+    super(412, 'Your GitHub connection was revoked or has expired. Reconnect GitHub to continue.');
+  }
+}
+
+// When GitHub rejects a member's token, forget it so the app shows "Connect GitHub" again.
+github.onError(async (err, c) => {
+  if (err instanceof GhAuthError) {
+    const user = c.get('user');
+    if (user) {
+      await c.env.DB.prepare(`UPDATE users SET github_token_enc=NULL WHERE id=?`).bind(user.id).run();
+      await publish(ctxOf(c), 'users', [user.id]).catch(() => {});
+    }
+    return c.json({ error: err.message, reconnect: true }, 412);
+  }
+  if (err instanceof HttpError) return c.json({ error: err.message }, err.status as 400);
+  console.error(err);
+  return c.json({ error: 'Something went wrong on the server.' }, 500);
+});
 const API = 'https://api.github.com';
 
 export async function ghToken(env: Env, userId: string): Promise<string | null> {
@@ -30,7 +52,8 @@ export async function gh<T = unknown>(tok: string, path: string, init: RequestIn
   const data = text ? JSON.parse(text) : null;
   if (!res.ok) {
     const msg = (data as { message?: string })?.message ?? res.statusText;
-    throw new HttpError(res.status === 401 ? 400 : res.status >= 500 ? 502 : res.status, `GitHub: ${msg}`);
+    if (res.status === 401) throw new GhAuthError();
+    throw new HttpError(res.status >= 500 ? 502 : res.status, `GitHub: ${msg}`);
   }
   return data as T;
 }

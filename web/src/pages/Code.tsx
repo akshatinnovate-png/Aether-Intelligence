@@ -31,6 +31,11 @@ export interface GhRepo {
 }
 export const useGhStatus = () => useQuery({ queryKey: ['gh-status'], queryFn: () => api.get<GhStatus>('/api/github/status') });
 
+// A revoked token is cleared on the server; refresh status so every page shows "Connect GitHub" again.
+window.addEventListener('aether:github-reconnect', () => {
+  qc.invalidateQueries({ queryKey: ['gh-status'] });
+});
+
 export function ConnectGithub({ status }: { status?: GhStatus }) {
   const me = useMe()!;
   if (!status) return null;
