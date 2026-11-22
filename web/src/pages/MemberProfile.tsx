@@ -5,7 +5,7 @@ import { addDays, format, startOfWeek } from 'date-fns';
 import { Award, GitBranch, KeyRound, Mail, MessageSquare, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { api } from '../lib/api';
 import { destroy, save, useAchievements, useCompetitions, useMe, useProjects, useTasks, useUsers } from '../lib/data';
-import { ago, can, dueLabel, fmtDate, loadTone, RANK, ROLE_DESC, ROLE_LABEL, SKILL_SUGGESTIONS, workload } from '../lib/derive';
+import { ago, can, collapseActivity, dueLabel, fmtDate, loadTone, RANK, ROLE_DESC, ROLE_LABEL, SKILL_SUGGESTIONS, workload } from '../lib/derive';
 import { toast, toastError, useUI } from '../lib/store';
 import { Avatar, Bar, confirmDialog, Empty, Field, Modal, PriorityIcon, StatusIcon } from '../components/ui';
 import { AVATAR_COLORS } from './settings/colors';
@@ -275,7 +275,7 @@ export default function MemberProfile() {
             <span className="eyebrow grow">Activity history</span>
           </div>
           <div className="list" style={{ maxHeight: 360, overflow: 'auto' }}>
-            {activity.map((a) => (
+            {collapseActivity(activity).map((a) => (
               <div key={a.id} className="li small">
                 <span className="mono xs faint" style={{ width: 110 }}>{fmtDate(a.createdAt, 'd MMM HH:mm')}</span>
                 <span className="t2 trunc grow">{a.summary}</span>

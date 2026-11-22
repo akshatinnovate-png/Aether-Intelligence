@@ -104,10 +104,17 @@ export function projectStats(p: Project, tasks: Task[], milestones: Milestone[] 
   const done = own.filter((t) => t.status === 'done').reduce((s, t) => s + Math.max(1, t.estimate), 0);
   const ms = milestones.filter((m) => m.projectId === p.id);
   const overdue = own.filter(isOverdue).length;
-  const pct = total ? Math.round((done / total) * 100) : p.status === 'done' ? 100 : 0;
+  // Progress blends task points and milestones: tasks alone, milestones alone, or 75/25 when a project has both.
+  const msDone = ms.filter((m) => m.done).length;
+  const taskPct = total ? (done / total) * 100 : null;
+  const msPct = ms.length ? (msDone / ms.length) * 100 : null;
+  const pct =
+    p.status === 'done'
+      ? 100
+      : Math.round(taskPct !== null && msPct !== null ? taskPct * 0.75 + msPct * 0.25 : taskPct ?? msPct ?? 0);
   const open = own.filter(isOpen).length;
   const schedule = scheduleHealth(p, pct);
-  return { tasks: own, count: own.length, open, doneCount: own.length - open, total, done, pct, overdue, milestones: ms, msDone: ms.filter((m) => m.done).length, health: overdue > 2 || schedule === 'behind' ? 'at_risk' : overdue > 0 || schedule === 'tight' ? 'watch' : 'on_track' };
+  return { tasks: own, count: own.length, open, doneCount: own.length - open, total, done, pct, overdue, milestones: ms, msDone, health: overdue > 2 || schedule === 'behind' ? 'at_risk' : overdue > 0 || schedule === 'tight' ? 'watch' : 'on_track' };
 }
 function scheduleHealth(p: Project, pct: number): 'ok' | 'tight' | 'behind' {
   const s = d(p.startDate);
@@ -272,4 +279,35 @@ export function nextPosition(list: Task[], index: number) {
   if (before === undefined) return after! - 1024;
   if (after === undefined) return before + 1024;
   return (before + after) / 2;
+}
+
+// ---------- activity feed ----------
+/** Verbs where only the latest state matters: rapid back-and-forth collapses into one line. */
+const SETTLING = new Set(['assigned', 'completed', 'reopened', 'moved', 'updated', 'rescheduled', 'prioritised', 'stage', 'condition', 'status', 'progress', 'members']);
+const WINDOW_MS = 10 * 60_000;
+
+/**
+ * Collapses repeated changes by the same person to the same item within 10 minutes, keeping the newest.
+ * "reached → reopened → reached milestone X" becomes one "reached"; three reassignments become the final one.
+ * Expects newest-first input; creations, comments, pushes and the like are always kept.
+ */
+export function collapseActivity<T extends { actorId: string | null; entityType: string; entityId: string; verb: string; createdAt: string }>(rows: T[]): T[] {
+  const out: T[] = [];
+  const kept = new Map<string, number>(); // actor|entity -> createdAt of the newest kept settling row
+  for (const r of rows) {
+    if (!SETTLING.has(r.verb)) {
+      out.push(r);
+      continue;
+    }
+    const key = `${r.actorId}|${r.entityType}|${r.entityId}`;
+    const t = Date.parse(r.createdAt);
+    const newer = kept.get(key);
+    if (newer !== undefined && newer - t <= WINDOW_MS) {
+      kept.set(key, t); // extend the window back through the burst
+      continue;
+    }
+    kept.set(key, t);
+    out.push(r);
+  }
+  return out;
 }

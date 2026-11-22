@@ -3,7 +3,7 @@ import { Link, NavLink, Navigate, Route, Routes, useNavigate, useParams } from '
 import { Archive, CalendarRange, Check, Code2, Columns3, GitBranch, LayoutDashboard, List, Milestone as MilestoneIcon, MessagesSquare, Plus, Settings2, Trash2 } from 'lucide-react';
 import { api } from '../lib/api';
 import { destroy, save, useActivity, useBookings, useChannels, useCompetitions, useEquipment, useMe, useMilestones, usePapers, useProjects, useTasks, useUsers } from '../lib/data';
-import { can, dueLabel, fmtDate, HEALTH, loadTone, PROJECT_STATUS, projectStats, STAGE_LABEL, workload } from '../lib/derive';
+import { can, collapseActivity, dueLabel, fmtDate, HEALTH, loadTone, PROJECT_STATUS, projectStats, STAGE_LABEL, workload } from '../lib/derive';
 import { toast, toastError, useUI } from '../lib/store';
 import { Avatar, AvatarStack, Bar, confirmDialog, Empty, Ring } from '../components/ui';
 import { Markdown } from '../components/Markdown';
@@ -151,7 +151,7 @@ function Overview({ project, canManage }: { project: Project; canManage: boolean
   const projects = useProjects();
   const milestones = useMilestones();
   const users = useUsers();
-  const activity = useActivity().filter((a) => a.projectId === project.id).slice(0, 25);
+  const activity = collapseActivity(useActivity().filter((a) => a.projectId === project.id)).slice(0, 25);
   const comps = useCompetitions().filter((c) => c.projectId === project.id);
   const papers = usePapers().filter((p) => p.projectId === project.id);
   const bookings = useBookings().filter((b) => b.projectId === project.id && b.endsAt > new Date().toISOString());

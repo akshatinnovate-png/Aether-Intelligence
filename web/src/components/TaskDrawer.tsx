@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { GitCommitHorizontal, Link2, Lock, MessageSquare, Trash2, X } from 'lucide-react';
 import { api } from '../lib/api';
 import { destroy, patchTask, qc, useMe, useMilestones, useProjects, useTasks, useUsers } from '../lib/data';
-import { ago, can, dueLabel, fmtDate, STATUS_LABEL } from '../lib/derive';
+import { ago, can, collapseActivity, dueLabel, fmtDate, STATUS_LABEL } from '../lib/derive';
 import { toast, toastError } from '../lib/store';
 import { Avatar, confirmDialog, Drawer, Picker, PriorityPicker, StatusIcon, StatusPicker, UserPicker } from './ui';
 import { Markdown } from './Markdown';
@@ -388,7 +388,7 @@ function mergeTimeline(d?: Detail) {
   if (!d) return [];
   const items = [
     ...d.comments.map((c) => ({ ...c, type: 'comment' as const })),
-    ...d.activity.filter((a) => a.verb !== 'commented').map((a) => ({ ...a, type: 'activity' as const })),
+    ...collapseActivity(d.activity.filter((a) => a.verb !== 'commented')).map((a) => ({ ...a, type: 'activity' as const })),
   ];
   return items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { format, addDays } from 'date-fns';
 import { AlertTriangle, ArrowUpRight, EyeOff, GitBranch } from 'lucide-react';
 import { useActivity, useBookings, useCompetitions, useEquipment, useEvents, useMe, useMilestones, usePapers, useProjects, useTasks, useUsers } from '../lib/data';
-import { ago, countdown, d, deadlines, dueLabel, equipmentState, EQUIP_CAT, HEALTH, isOverdue, KIND_LABEL, loadTone, projectStats, STAGE_LABEL, today, workload } from '../lib/derive';
+import { ago, collapseActivity, countdown, d, deadlines, dueLabel, equipmentState, EQUIP_CAT, HEALTH, isOverdue, KIND_LABEL, loadTone, projectStats, STAGE_LABEL, today, workload } from '../lib/derive';
 import { useUI } from '../lib/store';
 import { Avatar, AvatarStack, Bar, Empty, PriorityIcon, Sparkline, StatusIcon } from '../components/ui';
 import { savePrefs } from '../components/Shell';
@@ -338,7 +338,7 @@ function Timeline({ onHide }: { onHide: () => void }) {
   return (
     <Panel span={4} title="Lab activity · live" onHide={onHide} right={<span className="dot" style={{ background: 'var(--green)', animation: 'spin 2s linear infinite' }} />}>
       <div className="timeline-feed">
-        {activity.slice(0, 40).map((a) => (
+        {collapseActivity(activity).slice(0, 40).map((a) => (
           <FeedItem key={a.id} a={a} />
         ))}
         {!activity.length && <Empty title="Quiet so far">Everything the team does shows up here as it happens.</Empty>}
